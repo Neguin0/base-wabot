@@ -13,18 +13,8 @@ const axios = require('axios').default;
 const fs = require('fs');
 const { writeFile } = require('fs/promises');
 const path = require('path').join;
-const {
-	Boom
-} = require('@hapi/boom');
-const {
-	state,
-	saveState
-} = useSingleFileAuthState(
-	path('session.json'),
-	Pino({
-		level: 'silent'
-	})
-);
+const { Boom } = require('@hapi/boom');
+const { state, saveState } = useSingleFileAuthState(path('session.json'), Pino({level: 'silent'}));
 const checkVersion = async () => {
 	let BASE_URL = 'https://web.whatsapp.com/check-update?version=1&platform=web';
 	const { data: JSONData } = await axios.get(BASE_URL);
@@ -32,44 +22,31 @@ const checkVersion = async () => {
 	return version;
 };
 
-var { Dono } = JSON.parse(fs.readFileSync("db.json"))
-var criandoFig = false;
+var { Dono, Msg } = JSON.parse(fs.readFileSync("config.json"))
 var vermelho = '\u001b[31m';
 var azul = '\u001b[34m';
 var reset = '\u001b[0m';
 var verde = '\u001B[32m';
 var amarelo = '\u001B[33m';
-function random(min, max) {
-	min = Math.ceil(min);
-	max = Math.floor(max);
-	return Math.floor(Math.random() * (max - min)) + min;
-}
-function sleep(ms) {
-	return new Promise(resolve => setTimeout(resolve, ms));
-}
+const random = (min, max) => Math.floor(Math.random() * (Math.floor(max) - Math.ceil(min))) + Math.ceil(min);
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const Json = (json) => JSON.stringify(json, null, '\t');
-const getGroupAdmins = participants => {
+const getGroupAdmins = (participants) => {
 	admins = [];
 	for (let i of participants) {
 		i.admin ? admins.push(i.id) : '';
 	}
 	return admins;
 };
-function ramUsage() {
-	return Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100 + "MB";
-}
-function cpuUsage() {
-	return Math.round(process.cpuUsage().system / 1024 / 1024 * 100) / 100 + "MB";
-}
+const ramUsage = Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100 + "MB";
+const cpuUsage = Math.round(process.cpuUsage().system / 1024 / 1024 * 100) / 100 + "MB";
 
 const connect = async () => {
 	let version = await checkVersion();
 	const client = WASocket({
 		printQRInTerminal: true,
 		auth: state,
-		logger: Pino({
-			level: 'silent'
-		}),
+		logger: Pino({level: 'silent'}),
 		version
 	});
 	client.ev.on('creds.update', saveState);
@@ -80,18 +57,13 @@ const connect = async () => {
 			let reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
 
 			if (connection === 'close') {
-				if (reason === DisconnectReason.badSession) { console.log(`Bad Session File, Please Delete Session and Scan Again`); process.exit(); }
-				else if (reason === DisconnectReason.connectionClosed) { console.log('Connection closed, reconnecting....'); connect(); }
-				else if (reason === DisconnectReason.connectionLost) { console.log('Connection Lost from Server, reconnecting...'); connect(); }
-				else if (reason === DisconnectReason.connectionReplaced) { console.log('Connection Replaced, Another New Session Opened, Please Close Current Session First'); process.exit(); }
-				else if (reason === DisconnectReason.loggedOut) { console.log(`Device Logged Out, Please Delete ${session} and Scan Again.`); process.exit(); }
-				else if (reason === DisconnectReason.restartRequired) { console.log('Restart Required, Restarting...'); connect(); }
-				else if (reason === DisconnectReason.timedOut) { console.log('Connection TimedOut, Reconnecting...'); connect(); }
-				else { console.log(`Unknown DisconnectReason: ${reason}|${connection}`) }
+				if (reason === DisconnectReason.badSession || DisconnectReason.loggedOut || reason === DisconnectReason.connectionReplaced)
+					console.log('Falha na Conexao, fechando processo!'), process.exit();
+				else if (reason === DisconnectReason.connectionClosed || reason === DisconnectReason.connectionLost || DisconnectReason.restartRequired || DisconnectReason.timedOut)
+					console.log('Algo deu errado, Reconectando...'), connect();
+				else console.log(`Unknown DisconnectReason: ${reason}|${connection}`);
 			}
-		} catch (e) {
-			console.log(vermelho, "ERROR:", e);
-		}
+		} catch (e){ console.log(vermelho, "ERROR DE CONEXAO:", e) }
 	})
 	client.ev.on('group-participants.update', json => { });
 	client.ev.on('messages.upsert', async m => {
@@ -144,7 +116,7 @@ const connect = async () => {
 					mentioneds.push(i.replace(/@/g, '') + "@s.whatsapp.net");
 				return mentioneds;
 			};
-			//const isDono = Dono.includes(id);
+			const isDono = Dono.includes(id);
 			const isGroup = jid.endsWith('@g.us');
 			const groupMetadata = isGroup ? await client.groupMetadata(jid) : '';
 			const groupName = isGroup ? groupMetadata.subject : '';
@@ -177,12 +149,12 @@ const connect = async () => {
 				eval(cmdFile.toString());
 			}
 			if (cmd === "exc") {
-				if (!IsDono) return reply('Comando apenas para o dono!');
+				if (!isDono) return reply('Comando apenas para o dono!');
 				eval(`(async =>{
 					try{${text}} catch(err){ reply(err.toString()) }
 				})()`);
 			}
-		} catch (e) { console.log(vermelho, "ERROR:", e, reset) }
+		} catch (e) { console.log(vermelho, "ERROR DE LEITURA DE MSG:", e, reset) }
 	});
 };
 connect();
