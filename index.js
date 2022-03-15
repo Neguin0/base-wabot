@@ -32,6 +32,7 @@ const checkVersion = async () => {
 	return version;
 };
 
+var { Dono } = JSON.parse(fs.readFileSync("db.json"))
 var criandoFig = false;
 var vermelho = '\u001b[31m';
 var azul = '\u001b[34m';
@@ -115,21 +116,17 @@ const connect = async () => {
 							info.imageMessage.caption :
 							'';
 			const mentioned =
-				type == 'extendedTextMessage' &&
-					info &&
-					info.extendedTextMessage &&
-					info.extendedTextMessage.contextInfo &&
-					info.extendedTextMessage.contextInfo.participant ?
-					info.extendedTextMessage.contextInfo.participant :
-					'';
+				info &&
+				info.extendedTextMessage &&
+				info.extendedTextMessage.contextInfo &&
+				info.extendedTextMessage.contextInfo.participant ?
+				info.extendedTextMessage.contextInfo.participant : '';
 			const mentions =
-				type == 'extendedTextMessage' &&
-					info &&
-					info.extendedTextMessage &&
-					info.extendedTextMessage.contextInfo &&
-					info.extendedTextMessage.contextInfo.mentionedJid ?
-					info.extendedTextMessage.contextInfo.mentionedJid :
-					'';
+				info &&
+				info.extendedTextMessage &&
+				info.extendedTextMessage.contextInfo &&
+				info.extendedTextMessage.contextInfo.mentionedJid ?
+				info.extendedTextMessage.contextInfo.mentionedJid : '';
 			const cmd = msg.startsWith('/') ? msg.split(' ')[0].slice(1) : null;
 			const text = cmd ? msg.slice(cmd.length + 2) : '';
 			const args = text.split(' ');

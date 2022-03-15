@@ -1,0 +1,9 @@
+{
+	"Dono": ["556199955345@s.whatsapp.net"],
+	"Msg": {
+		"error": "Não foi possível executar essa ação!",
+		"isAdm": "Você não é administrador!",
+		"isBotAdm": "Eu não sou administrador!",
+		"isGroup": "Comando só pode ser executado em grupo!"
+	}
+}
